@@ -35,7 +35,7 @@ class ConvertRunnable(QRunnable):
     """Runnable class for conversion tasks"""
 
     def __init__(self, script_path, convert_mode, output_dir, exe_name, icon_path, file_version,
-                 copyright_info, extra_library, additional_options):
+                 copyright_info, extra_library, additional_options, python_path):
         super().__init__()
         self.script_path = script_path
         self.convert_mode = convert_mode
@@ -46,6 +46,7 @@ class ConvertRunnable(QRunnable):
         self.copyright_info = copyright_info
         self.extra_library = extra_library
         self.additional_options = additional_options
+        self.python_path = python_path
         self.signals = WorkerSignals()
         self._is_running = True
 
@@ -72,7 +73,7 @@ class ConvertRunnable(QRunnable):
 
             self.update_status("Start converting...")
             success = self.run_pyinstaller(options)
-
+            self._is_running = False
             if success:
                 exe_path = os.path.join(output_dir, exe_name + '.exe')
                 if os.path.exists(exe_path):
@@ -93,6 +94,7 @@ class ConvertRunnable(QRunnable):
             self.update_status(error_message)
             self.signals.conversion_failed.emit(error_message)
         finally:
+            self._is_running = False
             self.cleanup_files(version_file_path)
 
     def stop(self):
@@ -106,15 +108,18 @@ class ConvertRunnable(QRunnable):
 
     def ensure_pyinstaller(self) -> bool:
         """Make sure PyInstaller is installed"""
+        path = self.python_path
+        if not path:
+            path = sys.executable
         try:
-            subprocess.run([sys.executable, '-m', 'PyInstaller', '--version'],
+            subprocess.run([path, '-m', 'PyInstaller', '--version'],
                            check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             self.update_status("PyInstaller detected.")
             return True
         except subprocess.CalledProcessError:
             self.update_status("PyInstaller not detected, trying to install...")
             try:
-                subprocess.check_call([sys.executable, "-m", "pip", "install", "pyinstaller"])
+                subprocess.check_call([path, "-m", "pip", "install", "pyinstaller"])
                 self.update_status("PyInstaller was installed successfully.")
                 return True
             except subprocess.CalledProcessError as e:
@@ -221,7 +226,10 @@ class ConvertRunnable(QRunnable):
 
     def run_pyinstaller(self, options: list) -> bool:
         """Run PyInstaller to convert"""
-        cmd = [sys.executable, '-m', 'PyInstaller'] + options + [self.script_path]
+        path = self.python_path
+        if not path:
+            path = sys.executable
+        cmd = [path, '-m', 'PyInstaller'] + options + [self.script_path]
         self.update_status(f"Execute Command: {' '.join(cmd)}")
         try:
             process = subprocess.Popen(
@@ -614,7 +622,11 @@ class MainWindow(QMainWindow):
         if not self.script_paths:
             QMessageBox.warning(self, "Warning", "Please select at least one Python script first.")
             return
-
+        python_path = None
+        if not ("__file__" in globals() and "PythonEXE_Maker.py" in sys.argv[0]):
+            python_path, _ = QFileDialog.getOpenFileName(self, "Select Python File", "", "Executable (*.exe)")
+            if not python_path:
+                return
         convert_mode = self.mode_combo.currentText()
         output_dir = self.output_edit.text().strip() or None
         exe_name = self.name_edit.text().strip() or None
@@ -652,7 +664,7 @@ class MainWindow(QMainWindow):
                                        output_dir=output_dir, exe_name=exe_name, icon_path=icon_path,
                                        file_version=file_version,
                                        copyright_info=copyright_info, extra_library=extra_library,
-                                       additional_options=additional_options)
+                                       additional_options=additional_options, python_path=python_path)
 
             runnable.signals.status_updated.connect(lambda msg, sp=script_path: self.update_status(msg, sp))
             runnable.signals.progress_updated.connect(lambda val, sp=script_path: self.update_progress(val, sp))
@@ -682,7 +694,7 @@ class MainWindow(QMainWindow):
             task_widget['status'].setText(f"Conversion successful! File: {exe_path} ({exe_size} MB)")
             task_widget['progress'].setValue(100)
             self.progress_bar.setValue(100)
-        if all([getattr(task, '_is_running', False) for task in self.tasks]):
+        if not all([getattr(task, '_is_running', False) for task in self.tasks]):
             self.conversion_complete()
 
     def conversion_failed(self, error_message: str, script_path: str):
@@ -693,7 +705,7 @@ class MainWindow(QMainWindow):
             task_widget['status'].setText(f"<span style='color:red;'>{error_message}</span>")
             task_widget['progress'].setValue(0)
             self.progress_bar.setValue(0)
-        if all([getattr(task, '_is_running', False) for task in self.tasks]):
+        if not all([getattr(task, '_is_running', False) for task in self.tasks]):
             self.conversion_complete()
 
     def conversion_complete(self):
@@ -764,16 +776,6 @@ class MainWindow(QMainWindow):
         layout.addWidget(status)
 
         return {'widget': widget, 'script_label': script_label, 'progress': progress, 'status': status}  # , 'log': log}
-
-    def load_settings(self):
-        """Load saved settings"""
-        # QSettings (This method has been removed as QSettings is no longer used)
-        pass
-
-    def save_settings(self):
-        """Save current settings"""
-        # QSettings (This method has been removed as QSettings is no longer used)
-        pass
 
     def update_start_button_state(self):
         """Update the enabled state of the start button"""
