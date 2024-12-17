@@ -527,22 +527,38 @@ class MainWindow(QMainWindow):
         advanced_settings_group = QGroupBox("Advanced Settings")
         advanced_settings_layout = QGridLayout()
 
+        # Python Path
+        python_path_label = QLabel("Python Path:")
+        self.python_path_edit = QLineEdit()
+        self.python_path_edit.setPlaceholderText("Select the Python exe file to use.")
+        self.python_path_edit.setToolTip('Select the Python path to use.')
+        if"__file__" in globals() and "PythonEXE_Maker.py" in sys.argv[0]:
+            self.python_path_edit.setText(sys.executable)
+        python_path_button = QPushButton("Browse")
+        python_path_button.setToolTip("Select the python exe file.")
+        python_path_button.clicked.connect(self.browse_python_path_file)
+        python_path_h_layout = QHBoxLayout()
+        python_path_h_layout.addWidget(self.python_path_edit)
+        python_path_h_layout.addWidget(python_path_button)
+        advanced_settings_layout.addWidget(python_path_label, 0, 0)
+        advanced_settings_layout.addLayout(python_path_h_layout, 0, 1)
+
         # Extra modules
         library_label = QLabel("Additional Modules:")
         self.library_edit = QLineEdit()
         self.library_edit.setPlaceholderText("Hidden imported modules, separated by commas")
         self.library_edit.setToolTip(
             "Enter the name of the module that needs to be added (separate multiple with commas).")
-        advanced_settings_layout.addWidget(library_label, 0, 0)
-        advanced_settings_layout.addWidget(self.library_edit, 0, 1)
+        advanced_settings_layout.addWidget(library_label, 1, 0)
+        advanced_settings_layout.addWidget(self.library_edit, 1, 1)
 
         # Additional arguments
         options_label = QLabel("Additional Parameters:")
         self.options_edit = QLineEdit()
         self.options_edit.setPlaceholderText("For example：--add-data 'data.txt;.'")
         self.options_edit.setToolTip("Enter custom PyInstaller parameters.")
-        advanced_settings_layout.addWidget(options_label, 1, 0)
-        advanced_settings_layout.addWidget(self.options_edit, 1, 1)
+        advanced_settings_layout.addWidget(options_label, 2, 0)
+        advanced_settings_layout.addWidget(self.options_edit, 2, 1)
 
         advanced_settings_group.setLayout(advanced_settings_layout)
         settings_layout.addWidget(advanced_settings_group, 3, 0, 1, 2)
@@ -608,6 +624,11 @@ class MainWindow(QMainWindow):
         if icon_path:
             self.icon_edit.setText(icon_path)
 
+    def browse_python_path_file(self):
+        python_path, _ = QFileDialog.getOpenFileName(self, "Select Python File", "", "Executable (*.exe)")
+        if python_path:
+            self.python_path_edit.setText(python_path)
+
     def remove_script(self, item: QListWidgetItem):
         """Remove script"""
         path = item.text()
@@ -622,11 +643,6 @@ class MainWindow(QMainWindow):
         if not self.script_paths:
             QMessageBox.warning(self, "Warning", "Please select at least one Python script first.")
             return
-        python_path = None
-        if not ("__file__" in globals() and "PythonEXE_Maker.py" in sys.argv[0]):
-            python_path, _ = QFileDialog.getOpenFileName(self, "Select Python File", "", "Executable (*.exe)")
-            if not python_path:
-                return
         convert_mode = self.mode_combo.currentText()
         output_dir = self.output_edit.text().strip() or None
         exe_name = self.name_edit.text().strip() or None
@@ -635,6 +651,15 @@ class MainWindow(QMainWindow):
         copyright_info = self.copyright_edit.text().strip()
         extra_library = self.library_edit.text().strip() or None
         additional_options = self.options_edit.text().strip() or None
+        python_path = self.python_path_edit.text().strip() or None
+
+        if not python_path:
+            QMessageBox.warning(self, "Warning", "Please set the correct path for Python (python.exe).")
+            return
+
+        if not os.path.exists(python_path):
+            QMessageBox.warning(self, "Warning", "Python path does not exist. Please select a correct file. ")
+            return
 
         if file_version and not self.validate_version(file_version):
             QMessageBox.warning(self, "Warning",
