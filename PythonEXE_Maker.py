@@ -17,6 +17,11 @@ try:
 except ImportError:
     Image = None
 
+import importlib
+# if '_PYI_SPLASH_IPC' in os.environ and importlib.util.find_spec("pyi_splash"):
+#     import pyi_splash
+#     pyi_splash.close()
+
 # Set up logging: output logs to file and console
 logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] %(message)s', handlers=[
     logging.FileHandler("app.log", mode='w', encoding='utf-8'),
@@ -79,8 +84,6 @@ class ConvertRunnable(QRunnable):
                 if os.path.exists(exe_path):
                     exe_size = os.path.getsize(exe_path) // 1048576
                     self.signals.conversion_finished.emit(exe_path, exe_size)
-                    self.update_status(
-                        f"Conversion successful! EXE file is located at: {exe_path} (Size: {exe_size} MB)")
                 else:
                     error_message = "Conversion completed, but the resulting EXE file was not found."
                     self.update_status(error_message)
@@ -713,10 +716,13 @@ class MainWindow(QMainWindow):
 
     def conversion_finished(self, exe_path: str, exe_size: int, script_path: str):
         """Handle conversion completion"""
-        self.append_status(f"Conversion successful! EXE file is located at: {exe_path} (size: {exe_size} MB)")
+        self.append_status("<span style='color:green;'>Conversion successful!</span>")
+        self.append_status(f"EXE file is located at: {exe_path} (size: {exe_size} MB)")
         task_widget = self.task_widgets.get(script_path)
         if task_widget:
-            task_widget['status'].setText(f"Conversion successful! File: {exe_path} ({exe_size} MB)")
+            task_widget['status'].setText("<span style='color:green;'>Conversion successful!</span>")
+            task_widget['path'].show()
+            task_widget['path'].setText(f"File: {exe_path} ({exe_size} MB)")
             task_widget['progress'].setValue(100)
             self.progress_bar.setValue(100)
         if not all([getattr(task, '_is_running', False) for task in self.tasks]):
@@ -784,23 +790,27 @@ class MainWindow(QMainWindow):
         """Create a task display widget"""
         widget = QFrame()
         widget.setFrameShape(QFrame.StyledPanel)
-        layout = QHBoxLayout(widget)
+        layout = QGridLayout(widget)
 
         script_label = QLabel(os.path.basename(script_path))
         script_label.setFixedWidth(200)
-        layout.addWidget(script_label)
+        layout.addWidget(script_label, 0, 0)
 
         progress = QProgressBar()
         progress.setRange(0, 100)
         progress.setValue(0)
         progress.setFixedWidth(200)
-        layout.addWidget(progress)
+        layout.addWidget(progress, 0, 1)
 
         status = QLabel("Waiting...")
-        status.setWordWrap(True)
-        layout.addWidget(status)
+        layout.addWidget(status, 0, 2)
 
-        return {'widget': widget, 'script_label': script_label, 'progress': progress, 'status': status}  # , 'log': log}
+        path = QLabel("")
+        path.setWordWrap(True)
+        path.hide()
+        layout.addWidget(path, 1, 0, 1, 3)
+
+        return {'widget': widget, 'script_label': script_label, 'progress': progress, 'status': status, 'path': path}
 
     def update_start_button_state(self):
         """Update the enabled state of the start button"""
