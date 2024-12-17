@@ -113,13 +113,13 @@ class ConvertRunnable(QRunnable):
             path = sys.executable
         try:
             subprocess.run([path, '-m', 'PyInstaller', '--version'],
-                           check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                           check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
             self.update_status("PyInstaller detected.")
             return True
         except subprocess.CalledProcessError:
             self.update_status("PyInstaller not detected, trying to install...")
             try:
-                subprocess.check_call([path, "-m", "pip", "install", "pyinstaller"])
+                subprocess.check_call([path, "-m", "pip", "install", "pyinstaller"], shell=True)
                 self.update_status("PyInstaller was installed successfully.")
                 return True
             except subprocess.CalledProcessError as e:
@@ -233,7 +233,7 @@ class ConvertRunnable(QRunnable):
         self.update_status(f"Execute Command: {' '.join(cmd)}")
         try:
             process = subprocess.Popen(
-                cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True
+                cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True, shell=True
             )
 
             for line in process.stdout:
