@@ -539,7 +539,7 @@ class MainWindow(QMainWindow):
         self.python_path_edit = QLineEdit()
         self.python_path_edit.setPlaceholderText("Select the Python exe file to use.")
         self.python_path_edit.setToolTip('Select the Python path to use.')
-        if"__file__" in globals() and "PythonEXE_Maker.py" in sys.argv[0]:
+        if "__file__" in globals() and "PythonEXE_Maker.py" in sys.argv[0]:
             self.python_path_edit.setText(sys.executable)
         python_path_button = QPushButton("...")
         python_path_button.setToolTip("Select the python exe file.")
@@ -571,6 +571,73 @@ class MainWindow(QMainWindow):
 
         advanced_settings_group.setLayout(advanced_settings_layout)
         settings_layout.addWidget(advanced_settings_group, 3, 0, 1, 2)
+
+        # Additional Directory
+        additional_directory_group = QGroupBox("Additional Directory")
+        additional_directory_layout = QGridLayout()
+
+        # Source and destination headers
+        source_label = QLabel("Source")
+        destination_label = QLabel("Destination")
+        additional_directory_layout.addWidget(source_label, 0, 0)
+        additional_directory_layout.addWidget(destination_label, 0, 1)
+
+        # First Folder
+        first_source_folder_h_layout = QHBoxLayout()
+        self.first_source_folder_edit = QLineEdit()
+        self.first_source_folder_edit.setPlaceholderText(".\\Icons")
+        self.first_source_folder_edit.setToolTip('Enter the directory to be included in the installation.')
+        first_source_folder_button = QPushButton("...")
+        first_source_folder_button.setToolTip("Select the source directory folder.")
+        first_source_folder_button.clicked.connect(self.browse_directory)
+        first_source_folder_button.setMaximumWidth(40)
+        first_source_folder_button.setStyleSheet("font-weight: bold")
+        first_source_folder_h_layout.addWidget(self.first_source_folder_edit)
+        first_source_folder_h_layout.addWidget(first_source_folder_button)
+        self.first_destination_folder_edit = QLineEdit()
+        self.first_destination_folder_edit.setPlaceholderText("\\Icons")
+        self.first_destination_folder_edit.setToolTip('Enter the destination path.')
+        additional_directory_layout.addLayout(first_source_folder_h_layout, 1, 0)
+        additional_directory_layout.addWidget(self.first_destination_folder_edit, 1, 1)
+
+        # Second Folder
+        second_source_folder_h_layout = QHBoxLayout()
+        self.second_source_folder_edit = QLineEdit()
+        self.second_source_folder_edit.setPlaceholderText(".\\Icons")
+        self.second_source_folder_edit.setToolTip('Enter the directory to be included in the installation.')
+        second_source_folder_button = QPushButton("...")
+        second_source_folder_button.setToolTip("Select the source directory folder.")
+        second_source_folder_button.clicked.connect(self.browse_directory)
+        second_source_folder_button.setMaximumWidth(40)
+        second_source_folder_button.setStyleSheet("font-weight: bold")
+        second_source_folder_h_layout.addWidget(self.second_source_folder_edit)
+        second_source_folder_h_layout.addWidget(second_source_folder_button)
+        self.second_destination_folder_edit = QLineEdit()
+        self.second_destination_folder_edit.setPlaceholderText("\\Icons")
+        self.second_destination_folder_edit.setToolTip('Enter the destination path.')
+        additional_directory_layout.addLayout(second_source_folder_h_layout, 2, 0)
+        additional_directory_layout.addWidget(self.second_destination_folder_edit, 2, 1)
+
+        # Third Folder
+        third_source_folder_h_layout = QHBoxLayout()
+        self.third_source_folder_edit = QLineEdit()
+        self.third_source_folder_edit.setPlaceholderText(".\\Icons")
+        self.third_source_folder_edit.setToolTip('Enter the directory to be included in the installation.')
+        third_source_folder_button = QPushButton("...")
+        third_source_folder_button.setToolTip("Select the source directory folder.")
+        third_source_folder_button.clicked.connect(self.browse_directory)
+        third_source_folder_button.setMaximumWidth(40)
+        third_source_folder_button.setStyleSheet("font-weight: bold")
+        third_source_folder_h_layout.addWidget(self.third_source_folder_edit)
+        third_source_folder_h_layout.addWidget(third_source_folder_button)
+        self.third_destination_folder_edit = QLineEdit()
+        self.third_destination_folder_edit.setPlaceholderText("\\Icons")
+        self.third_destination_folder_edit.setToolTip('Enter the destination path.')
+        additional_directory_layout.addLayout(third_source_folder_h_layout, 3, 0)
+        additional_directory_layout.addWidget(self.third_destination_folder_edit, 3, 1)
+
+        additional_directory_group.setLayout(additional_directory_layout)
+        settings_layout.addWidget(additional_directory_group, 4, 0, 1, 2)
 
         settings_group.setLayout(settings_layout)
         return settings_group
@@ -626,6 +693,12 @@ class MainWindow(QMainWindow):
         output_dir = QFileDialog.getExistingDirectory(self, "Select output directory")
         if output_dir:
             self.output_edit.setText(output_dir)
+
+    def browse_directory(self):
+        """Browse and set the output directory"""
+        output_dir = QFileDialog.getExistingDirectory(self, "Select the directory to be included")
+        if output_dir:
+            self.first_source_folder_edit.setText(output_dir)
 
     def browse_icon_file(self):
         """Browse and set the icon file"""
