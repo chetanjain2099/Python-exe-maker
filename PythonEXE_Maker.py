@@ -3,11 +3,10 @@ import sys
 import subprocess
 import logging
 
-from PySide6.QtWidgets import (
-    QApplication, QMainWindow, QWidget, QVBoxLayout, QLabel, QPushButton, QFileDialog, QMessageBox,
-    QTextEdit, QLineEdit, QHBoxLayout, QProgressBar, QGridLayout, QComboBox, QGroupBox, QStatusBar,
-    QListWidget, QListWidgetItem, QSplitter, QScrollArea, QFrame, QTabWidget, QCheckBox, QRadioButton
-)
+from PySide6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, QLabel, QPushButton, QFileDialog,
+                               QMessageBox, QTextEdit, QLineEdit, QHBoxLayout, QProgressBar, QGridLayout, QGroupBox,
+                               QStatusBar, QListWidget, QListWidgetItem, QSplitter, QScrollArea, QFrame, QTabWidget,
+                               QCheckBox)
 from PySide6.QtGui import QFont, QIcon, QColor, QAction
 from PySide6.QtCore import Qt, QRunnable, QThreadPool, Signal, QObject
 
@@ -312,7 +311,7 @@ class DropArea(QLabel):
         super().__init__(parent)
         self.setAcceptDrops(True)
         self.setText("Drag in .py file")
-        self.setAlignment(Qt.AlignCenter)
+        self.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.setStyleSheet("""
             QLabel {
                 border: 2px dashed #aaa;
@@ -367,7 +366,7 @@ class MainWindow(QMainWindow):
         # Menu bar
         self.init_menu()
 
-        splitter = QSplitter(Qt.Horizontal)
+        splitter = QSplitter(Qt.Orientation.Horizontal)
 
         # Settings and operation area on the left
         left_widget = QWidget()
@@ -423,7 +422,7 @@ class MainWindow(QMainWindow):
         self.task_area.setWidgetResizable(True)
         self.task_container = QWidget()
         self.task_layout = QVBoxLayout(self.task_container)
-        self.task_layout.setAlignment(Qt.AlignTop)
+        self.task_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         self.task_area.setWidget(self.task_container)
         task_progress_layout.addWidget(self.task_area)
 

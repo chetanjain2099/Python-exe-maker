@@ -12,7 +12,8 @@
 - **Batch conversion**: Convert multiple Python scripts to EXE files at once.
 
 - **Custom settings**:
-  - Select the conversion mode (GUI mode or command line mode).
+  - Option to add a console window or hide the console window.
+  - Option to select single file or single directory.
   - Specify the output directory.
   - Set the EXE file name.
   - Add a custom icon (supports `.png` and `.ico` formats, `.png` will be automatically converted to `.ico`).
@@ -73,7 +74,7 @@
     *If there is no `requirements.txt` file, please install the dependencies manually:*
 
     ```bash
-    pip install PyQt5 Pillow PyInstaller
+    pip install pyside6-essentials Pillow PyInstaller
     ```
 
 ## Instructions
@@ -86,7 +87,9 @@
 
 2. **Configure conversion parameters**
 
-   - **Conversion mode**: Select whether the generated EXE is with a console (command line mode) or without a console (GUI mode).
+   - **Console Window**: Select whether the generated EXE is with a console (command line mode) or without a console.
+   - 
+   - **Single File**: Select whether the generated EXE is a single file or a single directory.
 
    - **Output directory**: Specify the storage location of the generated EXE file, which defaults to the directory where the source file is located.
 
@@ -98,9 +101,11 @@
 
      - **File version**: Set the version number of the EXE file (format: X.X.X.X).
      - **Copyright information**: Set the copyright information of the EXE file.
+   
    - **Advanced settings**:
      - **Additional modules**: Enter the module names that need to be hidden import. Multiple modules are separated by commas.
      - **Additional arguments**: Enter additional command line arguments for PyInstaller.
+   
    - **Additional Directory**: Specify the source and destination location of the directory to be included in the folder.
 
 3. **Add conversion task**
