@@ -3,13 +3,13 @@ import sys
 import subprocess
 import logging
 
-from PyQt5.QtWidgets import (
+from PySide6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QLabel, QPushButton, QFileDialog, QMessageBox,
-    QTextEdit, QLineEdit, QHBoxLayout, QProgressBar, QGridLayout, QComboBox, QGroupBox, QAction, QStatusBar,
-    QListWidget, QListWidgetItem, QSplitter, QScrollArea, QFrame, QTabWidget
+    QTextEdit, QLineEdit, QHBoxLayout, QProgressBar, QGridLayout, QComboBox, QGroupBox, QStatusBar,
+    QListWidget, QListWidgetItem, QSplitter, QScrollArea, QFrame, QTabWidget, QCheckBox, QRadioButton
 )
-from PyQt5.QtGui import QFont, QIcon, QColor
-from PyQt5.QtCore import Qt, QRunnable, QThreadPool, pyqtSignal, QObject
+from PySide6.QtGui import QFont, QIcon, QColor, QAction
+from PySide6.QtCore import Qt, QRunnable, QThreadPool, Signal, QObject
 
 # Try to import Pillow
 try:
@@ -17,7 +17,7 @@ try:
 except ImportError:
     Image = None
 
-import importlib
+# import importlib
 
 # if '_PYI_SPLASH_IPC' in os.environ and importlib.util.find_spec("pyi_splash"):
 #     import pyi_splash
@@ -31,20 +31,21 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] %(me
 
 class WorkerSignals(QObject):
     """Defining signals for Worker threads"""
-    status_updated = pyqtSignal(str)
-    progress_updated = pyqtSignal(int)
-    conversion_finished = pyqtSignal(str, int)
-    conversion_failed = pyqtSignal(str)
+    status_updated = Signal(str)
+    progress_updated = Signal(int)
+    conversion_finished = Signal(str, int)
+    conversion_failed = Signal(str)
 
 
 class ConvertRunnable(QRunnable):
     """Runnable class for conversion tasks"""
 
-    def __init__(self, script_path, convert_mode, output_dir, exe_name, icon_path, file_version,
+    def __init__(self, script_path, console_window, single_exe_file, output_dir, exe_name, icon_path, file_version,
                  copyright_info, extra_library, additional_options, python_path):
         super().__init__()
         self.script_path = script_path
-        self.convert_mode = convert_mode
+        self.console_window = console_window
+        self.single_exe_file = single_exe_file
         self.output_dir = output_dir
         self.exe_name = exe_name
         self.icon_path = icon_path
@@ -55,6 +56,16 @@ class ConvertRunnable(QRunnable):
         self.python_path = python_path
         self.signals = WorkerSignals()
         self._is_running = True
+
+    def get_dir_size(self, path='.'):
+        total = 0
+        with os.scandir(path) as it:
+            for entry in it:
+                if entry.is_file():
+                    total += entry.stat().st_size
+                elif entry.is_dir():
+                    total += self.get_dir_size(entry.path)
+        return total
 
     def run(self):
         version_file_path = None
@@ -81,9 +92,14 @@ class ConvertRunnable(QRunnable):
             success = self.run_pyinstaller(options)
             self._is_running = False
             if success:
-                exe_path = os.path.join(output_dir, exe_name + '.exe')
+                exe_path = [os.path.join(output_dir, exe_name + '.exe')
+                            if self.single_exe_file
+                            else os.path.join(output_dir, exe_name, exe_name + '.exe')][0]
                 if os.path.exists(exe_path):
-                    exe_size = os.path.getsize(exe_path) // 1048576
+                    exe_size = [os.path.getsize(exe_path)
+                                if self.single_exe_file
+                                else self.get_dir_size(os.path.dirname(exe_path))]
+                    exe_size = exe_size[0] // 1048576
                     self.signals.conversion_finished.emit(exe_path, exe_size)
                 else:
                     error_message = "Conversion completed, but the resulting EXE file was not found."
@@ -132,8 +148,11 @@ class ConvertRunnable(QRunnable):
 
     def prepare_pyinstaller_options(self, exe_name: str, output_dir: str) -> list:
         """Prepare command line options for PyInstaller"""
-        mode = ["GUI Model", "Command Line Mode"]
-        options = ['--onefile', '--clean', '--console' if self.convert_mode == mode[1] else '--windowed']
+        if self.single_exe_file:
+            options = ['--onefile', '--clean']
+        else:
+            options = ['--onedir', '--clean']
+        options += ['--console' if self.console_window else '--windowed']
 
         if self.extra_library:
             hidden_imports = [lib.strip() for lib in self.extra_library.split(',') if lib.strip()]
@@ -287,7 +306,7 @@ class ConvertRunnable(QRunnable):
 
 class DropArea(QLabel):
     """Drag and drop area, allowing users to drag in .py files"""
-    file_dropped = pyqtSignal(str)
+    file_dropped = Signal(str)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -355,6 +374,7 @@ class MainWindow(QMainWindow):
         left_layout = QVBoxLayout(left_widget)
         left_layout.addWidget(self.init_settings_group())
         left_layout.addLayout(self.init_button_group())
+        left_widget.setMaximumWidth(450)
         splitter.addWidget(left_widget)
 
         # Right tab (task management, log)
@@ -462,14 +482,14 @@ class MainWindow(QMainWindow):
         settings_group = QGroupBox("Basic Settings")
         settings_layout = QGridLayout()
 
-        # Conversion mode
-        mode_label = QLabel("Conversion Mode:")
-        self.mode_combo = QComboBox()
-        self.mode_combo.addItems(["GUI Model", "Command Line Mode"])
-        self.mode_combo.setToolTip((
-            "Select whether the generated EXE will be with a console (command line mode) or without a console (GUI mode)."))
-        settings_layout.addWidget(mode_label, 0, 0)
-        settings_layout.addWidget(self.mode_combo, 0, 1)
+        # Console window mode
+        self.console_window = QCheckBox("Add a console window to the EXE file")
+        settings_layout.addWidget(self.console_window, 0, 0, 1, 2)
+
+        # Single exe or directory
+        self.single_exe_file = QCheckBox("Single EXE file")
+        self.single_exe_file.setChecked(True)
+        settings_layout.addWidget(self.single_exe_file, 1, 0, 1, 2)
 
         # Output directory
         output_label = QLabel("Output Directory:")
@@ -485,8 +505,8 @@ class MainWindow(QMainWindow):
         output_h_layout = QHBoxLayout()
         output_h_layout.addWidget(self.output_edit)
         output_h_layout.addWidget(output_button)
-        settings_layout.addWidget(output_label, 1, 0)
-        settings_layout.addLayout(output_h_layout, 1, 1)
+        settings_layout.addWidget(output_label, 2, 0)
+        settings_layout.addLayout(output_h_layout, 2, 1)
 
         # EXE information
         exe_info_group = QGroupBox("EXE Information")
@@ -529,7 +549,7 @@ class MainWindow(QMainWindow):
         exe_info_layout.addWidget(self.copyright_edit, 3, 1)
 
         exe_info_group.setLayout(exe_info_layout)
-        settings_layout.addWidget(exe_info_group, 2, 0, 1, 2)
+        settings_layout.addWidget(exe_info_group, 3, 0, 1, 2)
 
         # Advanced settings
         advanced_settings_group = QGroupBox("Advanced Settings")
@@ -542,6 +562,13 @@ class MainWindow(QMainWindow):
         self.python_path_edit.setToolTip('Select the Python path to use.')
         if "__file__" in globals() and "PythonEXE_Maker.py" in sys.argv[0]:
             self.python_path_edit.setText(sys.executable)
+        elif "PYTHONPATH" in os.environ:
+            paths = os.environ['PYTHONPATH'].split(os.pathsep)
+            for path in paths:
+                python_exe_path = os.path.join(path, 'python.exe')
+                if os.path.exists(python_exe_path):
+                    self.python_path_edit.setText(python_exe_path)
+                    break
         python_path_button = QPushButton("...")
         python_path_button.setToolTip("Select the python exe file.")
         python_path_button.clicked.connect(self.browse_python_path_file)
@@ -571,7 +598,7 @@ class MainWindow(QMainWindow):
         advanced_settings_layout.addWidget(self.options_edit, 2, 1)
 
         advanced_settings_group.setLayout(advanced_settings_layout)
-        settings_layout.addWidget(advanced_settings_group, 3, 0, 1, 2)
+        settings_layout.addWidget(advanced_settings_group, 4, 0, 1, 2)
 
         # Additional Directory
         additional_directory_group = QGroupBox("Additional Directory")
@@ -646,7 +673,7 @@ class MainWindow(QMainWindow):
         additional_directory_layout.addLayout(third_source_folder_h_layout, 3, 1)
 
         additional_directory_group.setLayout(additional_directory_layout)
-        settings_layout.addWidget(additional_directory_group, 4, 0, 1, 2)
+        settings_layout.addWidget(additional_directory_group, 5, 0, 1, 2)
 
         settings_group.setLayout(settings_layout)
         return settings_group
@@ -735,7 +762,8 @@ class MainWindow(QMainWindow):
         if not self.script_paths:
             QMessageBox.warning(self, "Warning", "Please select at least one Python script first.")
             return
-        convert_mode = self.mode_combo.currentText()
+        single_exe_file = self.single_exe_file.isChecked()
+        console_window = self.console_window.isChecked()
         output_dir = self.output_edit.text().strip() or None
         exe_name = self.name_edit.text().strip() or None
         icon_path = self.icon_edit.text().strip() or None
@@ -791,11 +819,11 @@ class MainWindow(QMainWindow):
             self.task_layout.addWidget(task_widget['widget'])
             self.task_widgets[script_path] = task_widget
 
-            runnable = ConvertRunnable(script_path=script_path, convert_mode=convert_mode,
-                                       output_dir=output_dir, exe_name=exe_name, icon_path=icon_path,
-                                       file_version=file_version,
-                                       copyright_info=copyright_info, extra_library=extra_library,
-                                       additional_options=additional_options, python_path=python_path)
+            runnable = ConvertRunnable(script_path=script_path, console_window=console_window,
+                                       single_exe_file=single_exe_file, output_dir=output_dir, exe_name=exe_name,
+                                       icon_path=icon_path, file_version=file_version, copyright_info=copyright_info,
+                                       extra_library=extra_library, additional_options=additional_options,
+                                       python_path=python_path)
 
             runnable.signals.status_updated.connect(lambda msg, sp=script_path: self.update_status(msg, sp))
             runnable.signals.progress_updated.connect(lambda val, sp=script_path: self.update_progress(val, sp))
@@ -857,7 +885,8 @@ class MainWindow(QMainWindow):
     def toggle_ui_elements(self, enabled: bool):
         """Enable or disable UI elements"""
         self.start_button.setEnabled(enabled and bool(self.script_paths))
-        self.mode_combo.setEnabled(enabled)
+        self.console_window.setEnabled(enabled)
+        self.single_exe_file.setEnabled(enabled)
         self.output_edit.setEnabled(enabled)
         self.name_edit.setEnabled(enabled)
         self.icon_edit.setEnabled(enabled)
@@ -930,7 +959,7 @@ class MainWindow(QMainWindow):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-
+    app.setStyle('windowsvista')
     script_dir = os.path.dirname(os.path.abspath(__file__))
 
     # Set icon for the software
@@ -942,4 +971,4 @@ if __name__ == "__main__":
 
     window = MainWindow()
     window.show()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())
