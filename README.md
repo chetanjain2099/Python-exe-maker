@@ -1,4 +1,4 @@
-**This library is a port of the library  https://github.com/yeahhe365/PythonEXE_Maker
+##### This library is a port of the library https://github.com/yeahhe365/PythonEXE_Maker. I have added more option and made certain improvements to the code.
 # PythonEXE Maker
 
 ![logo](./Icons/logo.png)
