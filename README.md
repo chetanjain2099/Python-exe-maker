@@ -101,6 +101,7 @@
    - **Advanced settings**:
      - **Additional modules**: Enter the module names that need to be hidden import. Multiple modules are separated by commas.
      - **Additional arguments**: Enter additional command line arguments for PyInstaller.
+   - **Additional Directory**: Specify the source and destination location of the directory to be included in the folder.
 
 3. **Add conversion task**
 
