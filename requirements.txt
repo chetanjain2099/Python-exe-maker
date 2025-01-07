@@ -1,4 +1,4 @@
 pyside6-essentials >= 6.2.0; python_version >= "3.8" and python_version < "3.13"
 Pillow >= 11.1.0; python_version >= "3.8" and python_version < "3.13"
 PyInstaller >= 6.11.1; python_version >= "3.8" and python_version < "3.13"
-pillow>=11.1.0; python_version >= "3.8" and python_version < "3.13"
+pillow~=11.1.0
