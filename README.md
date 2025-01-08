@@ -1,63 +1,55 @@
-##### This library is a port of the library https://github.com/yeahhe365/PythonEXE_Maker. I have added more option and made certain improvements to the code.
 # PythonEXE Maker
 
 ![logo](./Icons/logo.png)
 
-**PythonEXE Maker** is an open source and free tool designed to convert Python scripts into standalone executable files (EXE). Through a friendly graphical user interface, users can easily configure conversion parameters, manage multiple conversion tasks, and customize various properties of the generated EXE file, such as icon, version information, etc.
+**PythonEXE Maker** is an open-source and free tool designed to convert Python scripts into standalone executable files (EXE). It provides a user-friendly graphical interface to configure conversion parameters, manage multiple tasks, and customize properties like icons, version information, and more.
+
+---
 
 ## Features
 
-- **Drag and drop support**: Directly drag `.py` files into the program window to quickly add conversion tasks.
+- **Drag and Drop Support**: Quickly add `.py` files to the program via drag and drop.
+- **Batch Conversion**: Convert multiple Python scripts into EXE files simultaneously.
+- **Custom Settings**:
+  - Console window visibility.
+  - Single file or directory-based output.
+  - Specify output directory and EXE file name.
+  - Add custom icons (`.png` or `.ico` formats supported).
+  - Set EXE file version and copyright information.
+  - Add hidden import modules and additional PyInstaller parameters.
+- **Task Management**: Track progress and status of conversion tasks.
+- **Log Viewing**: Troubleshoot with detailed logs.
+- **Dependency Check**: Automatically ensure required libraries are installed at startup.
 
-- **Batch conversion**: Convert multiple Python scripts to EXE files at once.
-
-- **Custom settings**:
-  - Option to add a console window or hide the console window.
-  - Option to select single file or single directory.
-  - Specify the output directory.
-  - Set the EXE file name.
-  - Add a custom icon (supports `.png` and `.ico` formats, `.png` will be automatically converted to `.ico`).
-  - Configure version information and copyright information of the file.
-  - Specify additional hidden import modules and additional PyInstaller parameters.
-- **Task management**: View the progress and status of each conversion task in real time.
-- **Log viewing**: Detailed conversion log for easy troubleshooting.
-- **Dependency check**: Automatically check and prompt to install necessary dependency libraries when the program starts.
+---
 
 ## Screenshots
 
-### Main interface
-
+### Main Interface
 ![image](./Screenshots/MainInterface.png)
 
-### Log view
-
+### Log View
 ![image](./Screenshots/LogView.png)
+
+---
 
 ## Installation
 
 ### Prerequisites
-
-- **Operating system**: Windows
-
-- **Python version**: Python 3.6 and above
-
+- **Operating System**: Windows
+- **Python Version**: 3.6 and above
 - **Dependencies**:
-
   - [PyQt5](https://pypi.org/project/PyQt5/)
-
   - [Pillow](https://pypi.org/project/Pillow/)
-
   - [PyInstaller](https://pypi.org/project/PyInstaller/)
 
-### Installation steps
+### Steps
 
-1. **Clone repository**
-
-    ```bash
-    git clone [https://github.com/yeahhe365/PythonEXE_Maker.git](https://github.com/chetanjain2099/Python-exe-maker)
-    cd Python-exe-maker
-    ```
-
+1. **Clone Repository**
+   ```bash
+   git clone https://github.com/chetanjain2099/Python-exe-maker.git
+   cd Python-exe-maker
+   ```
 2. **Create a virtual environment (optional)**
 
     ```bash
@@ -84,7 +76,6 @@
     ```bash
     python PythonEXE_Maker.py
     ```
-
 2. **Configure conversion parameters**
 
    - **Console Window**: Select whether the generated EXE is with a console (command line mode) or without a console.
@@ -124,6 +115,13 @@
    - During the conversion process, you can click the "Cancel Conversion" button to stop all ongoing conversion tasks.
 
 ## Contribution
+Contributions are welcome! You can:
 
-Any form of contribution is welcome! You can participate in the following ways:
-  - **Submit a Pull Request**: Fork this repository, make modifications and submit a Pull Request, we will review it as soon as possible.
+- **Submit Issues**: Report bugs or suggest new features.
+- **Create Pull Requests**: Fork this repository, make changes, and submit a pull request.
+
+## License
+This project is licensed under the MIT License. See the [LICENSE](/LICENSE) file for more details.
+
+## Acknowledgments
+This project is based on the original repository by [yeahhe365](https://github.com/yeahhe365/PythonEXE_Maker). Additional options and improvements have been made in this fork to enhance functionality and usability.
