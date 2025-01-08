@@ -1,6 +1,8 @@
 # PythonEXE Maker
 
-![logo](./Icons/logo.png)
+<p align="center">
+  <img src="./Icons/logo.png" alt="logo">
+</p>
 
 **PythonEXE Maker** is an open-source and free tool designed to convert Python scripts into standalone executable files (EXE). It provides a user-friendly graphical interface to configure conversion parameters, manage multiple tasks, and customize properties like icons, version information, and more.
 
